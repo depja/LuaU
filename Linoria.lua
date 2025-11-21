@@ -32,7 +32,7 @@ local Library = {
     FontColor = Color3.fromRGB(255, 255, 255);
     MainColor = Color3.fromRGB(28, 28, 28);
     BackgroundColor = Color3.fromRGB(20, 20, 20);
-    AccentColor = Color3.fromRGB(0, 85, 255);
+    AccentColor = Color3.fromRGB(255, 153, 255); -- konami color
     OutlineColor = Color3.fromRGB(50, 50, 50);
     RiskColor = Color3.fromRGB(255, 50, 50),
 
@@ -2987,14 +2987,43 @@ function Library:CreateWindow(...)
         BorderColor3 = 'AccentColor';
     });
 
-    local WindowLabel = Library:CreateLabel({
-        Position = UDim2.new(0, 7, 0, 0);
-        Size = UDim2.new(0, 0, 0, 25);
-        Text = Config.Title or '';
-        TextXAlignment = Enum.TextXAlignment.Left;
-        ZIndex = 1;
-        Parent = Inner;
-    });
+local WindowLabel = Library:CreateLabel({
+    Position = UDim2.new(0, 7, 0, 0);
+    Size = UDim2.new(0, 0, 0, 25);
+    Text = Config.Title or '';
+    TextXAlignment = Enum.TextXAlignment.Left;
+    ZIndex = 1;
+    Parent = Inner;
+
+    RichText = true;
+})
+
+do
+    local rawText = WindowLabel.Text
+
+    if rawText == "Konami" then
+        local colors = {
+            "#FF99FF", 
+            "#FFB3FF", 
+            "#FFC2FF", 
+            "#FFD6FF", --
+            "#FFE6FF", 
+            "#FFFFFF", 
+        }
+
+        local parts = {}
+
+        for i = 1, #rawText do
+            local ch = rawText:sub(i, i)
+            local color = colors[math.clamp(i, 1, #colors)]
+
+            table.insert(parts, string.format('<font color="%s">%s</font>', color, ch))
+        end
+
+        -- Set the gradient-colored text
+        WindowLabel.Text = table.concat(parts)
+    end
+end
 
     local MainSectionOuter = Library:Create('Frame', {
         BackgroundColor3 = Library.BackgroundColor;
