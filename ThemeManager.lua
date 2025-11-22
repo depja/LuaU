@@ -2,8 +2,9 @@ local cloneref = cloneref or function(o) return o end
 local httpService = cloneref(game:GetService('HttpService'))
 local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
 local getassetfunc = getcustomasset or getsynasset
+
 local ThemeManager = {} do
-	ThemeManager.Folder = 'Theme Manager'
+	ThemeManager.Folder = 'LinoriaLibSettings'
 	-- if not isfolder(ThemeManager.Folder) then makefolder(ThemeManager.Folder) end
     
 	ThemeManager.Library = nil
@@ -21,7 +22,7 @@ local ThemeManager = {} do
 	}
     
 	function ApplyBackgroundVideo(webmLink)
-		if writefile == nil then return end;if readfile == nil then return end;if isfile == nil then return end
+		if writefile == nil or readfile == nil or isfile == nil or not getassetfunc then return end
 		if ThemeManager.Library == nil then return end
 		if ThemeManager.Library.InnerVideoBackground == nil then return end
 
@@ -44,18 +45,22 @@ local ThemeManager = {} do
 			end
 			
 			if (VideoData.Success) then
-				VideoData = VideoData.Body
-				if (isfile(ThemeManager.Folder .. '/themes/currentVideo.webm') == false and VideoData ~= nil) or VideoData ~= nil then
-					writefile(ThemeManager.Folder .. '/themes/currentVideo.webm', VideoData)
-					writefile(ThemeManager.Folder .. '/themes/currentVideoLink.txt', tostring(webmLink))
-				end
+				if VideoData.Body then
+                    writefile(ThemeManager.Folder .. '/themes/currentVideo.webm', VideoData.Body)
+                    writefile(ThemeManager.Folder .. '/themes/currentVideoLink.txt', tostring(webmLink))
+                end
 				
-				local Video = getassetfunc(ThemeManager.Folder .. '/themes/currentVideo.webm')
-				ThemeManager.Library.InnerVideoBackground.Video = Video
-				ThemeManager.Library.InnerVideoBackground.Visible = true
-				ThemeManager.Library.InnerVideoBackground:Play()
+                if isfile(ThemeManager.Folder .. '/themes/currentVideo.webm') then
+                    local Video = getassetfunc(ThemeManager.Folder .. '/themes/currentVideo.webm')
+                    ThemeManager.Library.InnerVideoBackground.Video = Video
+                    ThemeManager.Library.InnerVideoBackground.Visible = true
+                    ThemeManager.Library.InnerVideoBackground:Play()
+                end
 			end
-		end
+		else
+            -- If not a valid webm, hide the video
+            ThemeManager.Library.InnerVideoBackground.Visible = false
+        end
 	end
 	
 	function ThemeManager:ApplyTheme(theme)
@@ -74,14 +79,14 @@ local ThemeManager = {} do
 			if idx ~= "VideoLink" then
 				self.Library[idx] = Color3.fromHex(col)
 				
-				if getgenv().Linoria.Options[idx] then
-					getgenv().Linoria.Options[idx]:SetValueRGB(Color3.fromHex(col))
+				if getgenv().Options[idx] then
+					getgenv().Options[idx]:SetValueRGB(Color3.fromHex(col))
 				end
 			else
 				self.Library[idx] = col
 				
-				if getgenv().Linoria.Options[idx] then
-					getgenv().Linoria.Options[idx]:SetValue(col)
+				if getgenv().Options[idx] then
+					getgenv().Options[idx]:SetValue(col)
 				end
 				
 				ApplyBackgroundVideo(col)
@@ -93,17 +98,16 @@ local ThemeManager = {} do
 
 	function ThemeManager:ThemeUpdate()
 		-- This allows us to force apply themes without loading the themes tab :)
-		if self.Library.InnerVideoBackground ~= nil then
-			self.Library.InnerVideoBackground.Visible = false
-		end
-		
 		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
 		for i, field in next, options do
-			if getgenv().Linoria.Options and getgenv().Linoria.Options[field] then
-				self.Library[field] = getgenv().Linoria.Options[field].Value
+			if getgenv().Options and getgenv().Options[field] then
 				if field == "VideoLink" then
-					ApplyBackgroundVideo(getgenv().Linoria.Options[field].Value)
-				end
+                    -- Video link is string
+                    ApplyBackgroundVideo(getgenv().Options[field].Value)
+                else
+                    -- Colors
+				    self.Library[field] = getgenv().Options[field].Value
+                end
 			end
 		end
 
@@ -124,11 +128,11 @@ local ThemeManager = {} do
 				isDefault = false;
 			end
 		elseif self.BuiltInThemes[self.DefaultTheme] then
-		theme = self.DefaultTheme
+		    theme = self.DefaultTheme
 		end
 
 		if isDefault then
-			getgenv().Linoria.Options.ThemeManager_ThemeList:SetValue(theme)
+			getgenv().Options.ThemeManager_ThemeList:SetValue(theme)
 		else
 			self:ApplyTheme(theme)
 		end
@@ -158,6 +162,7 @@ local ThemeManager = {} do
 		groupbox:AddLabel('Accent color'):AddColorPicker('AccentColor', { Default = self.Library.AccentColor });
 		groupbox:AddLabel('Outline color'):AddColorPicker('OutlineColor', { Default = self.Library.OutlineColor });
 		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = self.Library.FontColor });
+        groupbox:AddInput('VideoLink', { Text = 'Background Video (.webm)', Default = "", Placeholder = "Direct link to .webm file" })
 			
 		local ThemesArray = {}
 		for Name, Theme in next, self.BuiltInThemes do
@@ -169,9 +174,40 @@ local ThemeManager = {} do
 		groupbox:AddDivider()
 
 		groupbox:AddDropdown('ThemeManager_ThemeList', { Text = 'Theme list', Values = ThemesArray, Default = 1 })
+        
+        groupbox:AddButton('Set as default', function()
+			self:SaveDefault(getgenv().Options.ThemeManager_ThemeList.Value)
+			self.Library:Notify(string.format('Set default theme to %q', getgenv().Options.ThemeManager_ThemeList.Value))
+		end)
 
-		getgenv().Linoria.Options.ThemeManager_ThemeList:OnChanged(function()
-			self:ApplyTheme(getgenv().Linoria.Options.ThemeManager_ThemeList.Value)
+		getgenv().Options.ThemeManager_ThemeList:OnChanged(function()
+			self:ApplyTheme(getgenv().Options.ThemeManager_ThemeList.Value)
+		end)
+        
+        groupbox:AddDivider()
+		groupbox:AddInput('ThemeManager_CustomThemeName', { Text = 'Custom theme name' })
+		groupbox:AddDropdown('ThemeManager_CustomThemeList', { Text = 'Custom themes', Values = self:ReloadCustomThemes(), AllowNull = true, Default = 1 })
+		groupbox:AddDivider()
+		
+		groupbox:AddButton('Save theme', function() 
+			self:SaveCustomTheme(getgenv().Options.ThemeManager_CustomThemeName.Value)
+
+			getgenv().Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
+			getgenv().Options.ThemeManager_CustomThemeList:SetValue(nil)
+		end):AddButton('Load theme', function() 
+			self:ApplyTheme(getgenv().Options.ThemeManager_CustomThemeList.Value) 
+		end)
+
+		groupbox:AddButton('Refresh list', function()
+			getgenv().Options.ThemeManager_CustomThemeList:SetValues(self:ReloadCustomThemes())
+			getgenv().Options.ThemeManager_CustomThemeList:SetValue(nil)
+		end)
+
+		groupbox:AddButton('Set as default', function()
+			if getgenv().Options.ThemeManager_CustomThemeList.Value ~= nil and getgenv().Options.ThemeManager_CustomThemeList.Value ~= '' then
+				self:SaveDefault(getgenv().Options.ThemeManager_CustomThemeList.Value)
+				self.Library:Notify(string.format('Set default theme to %q', getgenv().Options.ThemeManager_CustomThemeList.Value))
+			end
 		end)
 
 		ThemeManager:LoadDefault()
@@ -180,11 +216,12 @@ local ThemeManager = {} do
 			self:ThemeUpdate()
 		end
 
-		getgenv().Linoria.Options.BackgroundColor:OnChanged(UpdateTheme)
-		getgenv().Linoria.Options.MainColor:OnChanged(UpdateTheme)
-		getgenv().Linoria.Options.AccentColor:OnChanged(UpdateTheme)
-		getgenv().Linoria.Options.OutlineColor:OnChanged(UpdateTheme)
-		getgenv().Linoria.Options.FontColor:OnChanged(UpdateTheme)
+		getgenv().Options.BackgroundColor:OnChanged(UpdateTheme)
+		getgenv().Options.MainColor:OnChanged(UpdateTheme)
+		getgenv().Options.AccentColor:OnChanged(UpdateTheme)
+		getgenv().Options.OutlineColor:OnChanged(UpdateTheme)
+		getgenv().Options.FontColor:OnChanged(UpdateTheme)
+        getgenv().Options.VideoLink:OnChanged(UpdateTheme)
 	end
 
 	function ThemeManager:GetCustomTheme(file)
@@ -213,9 +250,9 @@ local ThemeManager = {} do
 
 		for _, field in next, fields do
 			if field == "VideoLink" then
-				theme[field] = getgenv().Linoria.Options[field].Value
+				theme[field] = getgenv().Options[field].Value
 			else
-				theme[field] = getgenv().Linoria.Options[field].Value:ToHex()
+				theme[field] = getgenv().Options[field].Value:ToHex()
 			end
 		end
 
