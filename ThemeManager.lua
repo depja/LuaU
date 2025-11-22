@@ -3,6 +3,32 @@ local httpService = cloneref(game:GetService('HttpService'))
 local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
 local getassetfunc = getcustomasset or getsynasset
 
+-- Mobile Executor Polyfill (Fixes file system errors on mobile)
+if copyfunction and isfolder then 
+	local isfolder_, isfile_, listfiles_ = copyfunction(isfolder), copyfunction(isfile), copyfunction(listfiles)
+	local success_, error_ = pcall(function() return isfolder_(tostring(math.random(999999999, 999999999999))) end)
+
+	if success_ == false or (tostring(error_):match("not") and tostring(error_):match("found")) then
+		getgenv().isfolder = function(folder)
+			local s, data = pcall(function() return isfolder_(folder) end)
+			if s == false then return nil end
+			return data
+		end
+
+		getgenv().isfile = function(file)
+			local s, data = pcall(function() return isfile_(file) end)
+			if s == false then return nil end
+			return data
+		end
+
+		getgenv().listfiles = function(folder)
+			local s, data = pcall(function() return listfiles_(folder) end)
+			if s == false then return {} end
+			return data
+		end
+	end
+end
+
 local ThemeManager = {} do
 	ThemeManager.Folder = 'LinoriaLibSettings'
 	-- if not isfolder(ThemeManager.Folder) then makefolder(ThemeManager.Folder) end
@@ -69,7 +95,6 @@ local ThemeManager = {} do
 
 		if not data then return end
 
-		-- custom themes are just regular dictionaries instead of an array with { index, dictionary }
 		if self.Library.InnerVideoBackground ~= nil then
 			self.Library.InnerVideoBackground.Visible = false
 		end
@@ -97,15 +122,12 @@ local ThemeManager = {} do
 	end
 
 	function ThemeManager:ThemeUpdate()
-		-- This allows us to force apply themes without loading the themes tab :)
 		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
 		for i, field in next, options do
 			if getgenv().Options and getgenv().Options[field] then
 				if field == "VideoLink" then
-                    -- Video link is string
                     ApplyBackgroundVideo(getgenv().Options[field].Value)
                 else
-                    -- Colors
 				    self.Library[field] = getgenv().Options[field].Value
                 end
 			end
@@ -266,8 +288,6 @@ local ThemeManager = {} do
 		for i = 1, #list do
 			local file = list[i]
 			if file:sub(-5) == '.json' then
-				-- i hate this but it has to be done ...
-
 				local pos = file:find('.json', 1, true)
 				local char = file:sub(pos, pos)
 
@@ -291,9 +311,6 @@ local ThemeManager = {} do
 
 	function ThemeManager:BuildFolderTree()
 		local paths = {}
-
-		-- build the entire tree if a path is like some-hub/phantom-forces
-		-- makefolder builds the entire tree on Synapse X but not other exploits
 
 		local parts = self.Folder:split('/')
 		for idx = 1, #parts do
