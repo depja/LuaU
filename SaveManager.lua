@@ -1,7 +1,7 @@
 local cloneref = cloneref or function(o) return o end
 local httpService = cloneref(game:GetService("HttpService"))
 
--- Mobile Executor Polyfills (Filesystem Fixes)
+-- Mobile Executor Polyfill (Fixes file system errors on mobile)
 if copyfunction and isfolder then 
 	local isfolder_, isfile_, listfiles_ = copyfunction(isfolder), copyfunction(isfile), copyfunction(listfiles)
 	local success_, error_ = pcall(function() return isfolder_(tostring(math.random(999999999, 999999999999))) end)
@@ -133,7 +133,6 @@ do
 			return false, 'no config file is selected'
 		end
         
-        -- Ensure folders exist before saving
         self:BuildFolderTree()
 
 		local fullPath = self.Folder .. '/settings/' .. name .. '.json'
@@ -179,7 +178,7 @@ do
 
 		for _, option in next, decoded.objects do
 			if self.Parser[option.type] then
-				task.spawn(function() self.Parser[option.type].Load(option.idx, option) end) -- task.spawn() so the config loading wont get stuck.
+				task.spawn(function() self.Parser[option.type].Load(option.idx, option) end)
 			end
 		end
 
@@ -194,8 +193,6 @@ do
 		for i = 1, #list do
 			local file = list[i]
 			if file:sub(-5) == '.json' then
-				-- i hate this but it has to be done ...
-
 				local pos = file:find('.json', 1, true)
 				local start = pos
 
@@ -243,7 +240,7 @@ do
 		section:AddDivider()
 
 		section:AddButton('Create config', function()
-			local name = Options.SaveManager_ConfigName.Value
+			local name = getgenv().Options.SaveManager_ConfigName.Value
 
 			if name:gsub(' ', '') == '' then 
 				return self.Library:Notify('Invalid config name (empty)', 2)
@@ -256,10 +253,10 @@ do
 
 			self.Library:Notify(string.format('Created config %q', name))
 
-			Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
-			Options.SaveManager_ConfigList:SetValue(nil)
+			getgenv().Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
+			getgenv().Options.SaveManager_ConfigList:SetValue(nil)
 		end):AddButton('Load config', function()
-			local name = Options.SaveManager_ConfigList.Value
+			local name = getgenv().Options.SaveManager_ConfigList.Value
 
 			local success, err = self:Load(name)
 			if not success then
@@ -270,7 +267,7 @@ do
 		end)
 
 		section:AddButton('Overwrite config', function()
-			local name = Options.SaveManager_ConfigList.Value
+			local name = getgenv().Options.SaveManager_ConfigList.Value
 
 			local success, err = self:Save(name)
 			if not success then
@@ -281,12 +278,12 @@ do
 		end)
 
 		section:AddButton('Refresh list', function()
-			Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
-			Options.SaveManager_ConfigList:SetValue(nil)
+			getgenv().Options.SaveManager_ConfigList:SetValues(self:RefreshConfigList())
+			getgenv().Options.SaveManager_ConfigList:SetValue(nil)
 		end)
 
 		section:AddButton('Set as autoload', function()
-			local name = Options.SaveManager_ConfigList.Value
+			local name = getgenv().Options.SaveManager_ConfigList.Value
 			writefile(self.Folder .. '/settings/autoload.txt', name)
 			SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
 			self.Library:Notify(string.format('Set %q to auto load', name))
