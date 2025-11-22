@@ -35,6 +35,7 @@ local ThemeManager = {} do
     
 	ThemeManager.Library = nil
 	ThemeManager.BuiltInThemes = {
+		-- UPDATED: AccentColor set to d6a2ff
 		['Default'] 		= { 1, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1c1c1c","AccentColor":"d6a2ff","BackgroundColor":"141414","OutlineColor":"323232"}') },
 		['Dracula'] 		= { 2, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"232533","AccentColor":"6271a5","BackgroundColor":"1b1c27","OutlineColor":"7c82a7"}') },
 		['Bitch Bot'] 		= { 3, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1e1e1e","AccentColor":"7e48a3","BackgroundColor":"232323","OutlineColor":"141414"}') },
