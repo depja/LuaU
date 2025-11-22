@@ -2,10 +2,10 @@ local cloneref = cloneref or function(o) return o end
 local httpService = cloneref(game:GetService('HttpService'))
 local httprequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
 local getassetfunc = getcustomasset or getsynasset
-local ThemeManager = {} do
+
+local ThemeManager = {} 
+do
 	ThemeManager.Folder = 'Theme Manager'
-	-- if not isfolder(ThemeManager.Folder) then makefolder(ThemeManager.Folder) end
-    
 	ThemeManager.Library = nil
 	ThemeManager.BuiltInThemes = {
 		['Default'] 		= { 1, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1c1c1c","AccentColor":"0055ff","BackgroundColor":"141414","OutlineColor":"323232"}') },
@@ -64,7 +64,6 @@ local ThemeManager = {} do
 
 		if not data then return end
 
-		-- custom themes are just regular dictionaries instead of an array with { index, dictionary }
 		if self.Library.InnerVideoBackground ~= nil then
 			self.Library.InnerVideoBackground.Visible = false
 		end
@@ -74,14 +73,14 @@ local ThemeManager = {} do
 			if idx ~= "VideoLink" then
 				self.Library[idx] = Color3.fromHex(col)
 				
-				if getgenv().Linoria.Options[idx] then
-					getgenv().Linoria.Options[idx]:SetValueRGB(Color3.fromHex(col))
+				if self.Library.Options[idx] then
+					self.Library.Options[idx]:SetValueRGB(Color3.fromHex(col))
 				end
 			else
 				self.Library[idx] = col
 				
-				if getgenv().Linoria.Options[idx] then
-					getgenv().Linoria.Options[idx]:SetValue(col)
+				if self.Library.Options[idx] then
+					self.Library.Options[idx]:SetValue(col)
 				end
 				
 				ApplyBackgroundVideo(col)
@@ -92,17 +91,16 @@ local ThemeManager = {} do
 	end
 
 	function ThemeManager:ThemeUpdate()
-		-- This allows us to force apply themes without loading the themes tab :)
 		if self.Library.InnerVideoBackground ~= nil then
 			self.Library.InnerVideoBackground.Visible = false
 		end
 		
 		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor", "VideoLink" }
 		for i, field in next, options do
-			if getgenv().Linoria.Options and getgenv().Linoria.Options[field] then
-				self.Library[field] = getgenv().Linoria.Options[field].Value
+			if self.Library.Options and self.Library.Options[field] then
+				self.Library[field] = self.Library.Options[field].Value
 				if field == "VideoLink" then
-					ApplyBackgroundVideo(getgenv().Linoria.Options[field].Value)
+					ApplyBackgroundVideo(self.Library.Options[field].Value)
 				end
 			end
 		end
@@ -124,11 +122,11 @@ local ThemeManager = {} do
 				isDefault = false;
 			end
 		elseif self.BuiltInThemes[self.DefaultTheme] then
-		theme = self.DefaultTheme
+		    theme = self.DefaultTheme
 		end
 
 		if isDefault then
-			getgenv().Linoria.Options.ThemeManager_ThemeList:SetValue(theme)
+			self.Library.Options.ThemeManager_ThemeList:SetValue(theme)
 		else
 			self:ApplyTheme(theme)
 		end
@@ -170,8 +168,8 @@ local ThemeManager = {} do
 
 		groupbox:AddDropdown('ThemeManager_ThemeList', { Text = 'Theme list', Values = ThemesArray, Default = 1 })
 
-		getgenv().Linoria.Options.ThemeManager_ThemeList:OnChanged(function()
-			self:ApplyTheme(getgenv().Linoria.Options.ThemeManager_ThemeList.Value)
+		self.Library.Options.ThemeManager_ThemeList:OnChanged(function()
+			self:ApplyTheme(self.Library.Options.ThemeManager_ThemeList.Value)
 		end)
 
 		ThemeManager:LoadDefault()
@@ -180,11 +178,11 @@ local ThemeManager = {} do
 			self:ThemeUpdate()
 		end
 
-		getgenv().Linoria.Options.BackgroundColor:OnChanged(UpdateTheme)
-		getgenv().Linoria.Options.MainColor:OnChanged(UpdateTheme)
-		getgenv().Linoria.Options.AccentColor:OnChanged(UpdateTheme)
-		getgenv().Linoria.Options.OutlineColor:OnChanged(UpdateTheme)
-		getgenv().Linoria.Options.FontColor:OnChanged(UpdateTheme)
+		self.Library.Options.BackgroundColor:OnChanged(UpdateTheme)
+		self.Library.Options.MainColor:OnChanged(UpdateTheme)
+		self.Library.Options.AccentColor:OnChanged(UpdateTheme)
+		self.Library.Options.OutlineColor:OnChanged(UpdateTheme)
+		self.Library.Options.FontColor:OnChanged(UpdateTheme)
 	end
 
 	function ThemeManager:GetCustomTheme(file)
@@ -213,9 +211,13 @@ local ThemeManager = {} do
 
 		for _, field in next, fields do
 			if field == "VideoLink" then
-				theme[field] = getgenv().Linoria.Options[field].Value
+                if self.Library.Options[field] then
+				    theme[field] = self.Library.Options[field].Value
+                end
 			else
-				theme[field] = getgenv().Linoria.Options[field].Value:ToHex()
+                if self.Library.Options[field] then
+				    theme[field] = self.Library.Options[field].Value:ToHex()
+                end
 			end
 		end
 
@@ -229,8 +231,6 @@ local ThemeManager = {} do
 		for i = 1, #list do
 			local file = list[i]
 			if file:sub(-5) == '.json' then
-				-- i hate this but it has to be done ...
-
 				local pos = file:find('.json', 1, true)
 				local char = file:sub(pos, pos)
 
@@ -254,10 +254,6 @@ local ThemeManager = {} do
 
 	function ThemeManager:BuildFolderTree()
 		local paths = {}
-
-		-- build the entire tree if a path is like some-hub/phantom-forces
-		-- makefolder builds the entire tree on Synapse X but not other exploits
-
 		local parts = self.Folder:split('/')
 		for idx = 1, #parts do
 			paths[#paths + 1] = table.concat(parts, '/', 1, idx)
