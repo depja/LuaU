@@ -1,7 +1,8 @@
 local cloneref = cloneref or function(o) return o end
 local httpService = cloneref(game:GetService("HttpService"))
 
-if copyfunction and isfolder then -- fix for mobile executors :/
+-- Mobile Executor Polyfills (Filesystem Fixes)
+if copyfunction and isfolder then 
 	local isfolder_, isfile_, listfiles_ = copyfunction(isfolder), copyfunction(isfile), copyfunction(listfiles)
 	local success_, error_ = pcall(function() return isfolder_(tostring(math.random(999999999, 999999999999))) end)
 
@@ -26,7 +27,8 @@ if copyfunction and isfolder then -- fix for mobile executors :/
 	end
 end
 
-local SaveManager = {} do
+local SaveManager = {} 
+do
 	SaveManager.Folder = 'LinoriaLibSettings'
 	SaveManager.Ignore = {}
 	SaveManager.Parser = {
@@ -35,8 +37,8 @@ local SaveManager = {} do
 				return { type = 'Toggle', idx = idx, value = object.Value } 
 			end,
 			Load = function(idx, data)
-				if Toggles[idx] then 
-					Toggles[idx]:SetValue(data.value)
+				if getgenv().Toggles[idx] then 
+					getgenv().Toggles[idx]:SetValue(data.value)
 				end
 			end,
 		},
@@ -45,8 +47,8 @@ local SaveManager = {} do
 				return { type = 'Slider', idx = idx, value = tostring(object.Value) }
 			end,
 			Load = function(idx, data)
-				if Options[idx] then 
-					Options[idx]:SetValue(data.value)
+				if getgenv().Options[idx] then 
+					getgenv().Options[idx]:SetValue(data.value)
 				end
 			end,
 		},
@@ -55,8 +57,8 @@ local SaveManager = {} do
 				return { type = 'Dropdown', idx = idx, value = object.Value, mutli = object.Multi }
 			end,
 			Load = function(idx, data)
-				if Options[idx] then 
-					Options[idx]:SetValue(data.value)
+				if getgenv().Options[idx] then 
+					getgenv().Options[idx]:SetValue(data.value)
 				end
 			end,
 		},
@@ -65,8 +67,8 @@ local SaveManager = {} do
 				return { type = 'ColorPicker', idx = idx, value = object.Value:ToHex(), transparency = object.Transparency }
 			end,
 			Load = function(idx, data)
-				if Options[idx] then 
-					Options[idx]:SetValueRGB(Color3.fromHex(data.value), data.transparency)
+				if getgenv().Options[idx] then 
+					getgenv().Options[idx]:SetValueRGB(Color3.fromHex(data.value), data.transparency)
 				end
 			end,
 		},
@@ -75,8 +77,8 @@ local SaveManager = {} do
 				return { type = 'KeyPicker', idx = idx, mode = object.Mode, key = object.Value }
 			end,
 			Load = function(idx, data)
-				if Options[idx] then 
-					Options[idx]:SetValue({ data.key, data.mode })
+				if getgenv().Options[idx] then 
+					getgenv().Options[idx]:SetValue({ data.key, data.mode })
 				end
 			end,
 		},
@@ -86,8 +88,8 @@ local SaveManager = {} do
 				return { type = 'Input', idx = idx, text = object.Value }
 			end,
 			Load = function(idx, data)
-				if Options[idx] and type(data.text) == 'string' then
-					Options[idx]:SetValue(data.text)
+				if getgenv().Options[idx] and type(data.text) == 'string' then
+					getgenv().Options[idx]:SetValue(data.text)
 				end
 			end,
 		},
@@ -102,59 +104,6 @@ local SaveManager = {} do
 	function SaveManager:SetFolder(folder)
 		self.Folder = folder;
 		self:BuildFolderTree()
-	end
-
-	function SaveManager:Save(name)
-		if (not name) then
-			return false, 'no config file is selected'
-		end
-
-		local fullPath = self.Folder .. '/settings/' .. name .. '.json'
-
-		local data = {
-			objects = {}
-		}
-
-		for idx, toggle in next, Toggles do
-			if self.Ignore[idx] then continue end
-
-			table.insert(data.objects, self.Parser[toggle.Type].Save(idx, toggle))
-		end
-
-		for idx, option in next, Options do
-			if not self.Parser[option.Type] then continue end
-			if self.Ignore[idx] then continue end
-
-			table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
-		end	
-
-		local success, encoded = pcall(httpService.JSONEncode, httpService, data)
-		if not success then
-			return false, 'failed to encode data'
-		end
-
-		writefile(fullPath, encoded)
-		return true
-	end
-
-	function SaveManager:Load(name)
-		if (not name) then
-			return false, 'no config file is selected'
-		end
-		
-		local file = self.Folder .. '/settings/' .. name .. '.json'
-		if not isfile(file) then return false, 'invalid file' end
-
-		local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
-		if not success then return false, 'decode error' end
-
-		for _, option in next, decoded.objects do
-			if self.Parser[option.type] then
-				task.spawn(function() self.Parser[option.type].Load(option.idx, option) end) -- task.spawn() so the config loading wont get stuck.
-			end
-		end
-
-		return true
 	end
 
 	function SaveManager:IgnoreThemeSettings()
@@ -179,7 +128,66 @@ local SaveManager = {} do
 		end
 	end
 
+	function SaveManager:Save(name)
+		if (not name) then
+			return false, 'no config file is selected'
+		end
+        
+        -- Ensure folders exist before saving
+        self:BuildFolderTree()
+
+		local fullPath = self.Folder .. '/settings/' .. name .. '.json'
+
+		local data = {
+			objects = {}
+		}
+
+		for idx, toggle in next, getgenv().Toggles do
+			if self.Ignore[idx] then continue end
+
+			table.insert(data.objects, self.Parser[toggle.Type].Save(idx, toggle))
+		end
+
+		for idx, option in next, getgenv().Options do
+			if not self.Parser[option.Type] then continue end
+			if self.Ignore[idx] then continue end
+
+			table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
+		end	
+
+		local success, encoded = pcall(httpService.JSONEncode, httpService, data)
+		if not success then
+			return false, 'failed to encode data'
+		end
+
+		writefile(fullPath, encoded)
+		return true
+	end
+
+	function SaveManager:Load(name)
+		if (not name) then
+			return false, 'no config file is selected'
+		end
+        
+        self:BuildFolderTree()
+		
+		local file = self.Folder .. '/settings/' .. name .. '.json'
+		if not isfile(file) then return false, 'invalid file' end
+
+		local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
+		if not success then return false, 'decode error' end
+
+		for _, option in next, decoded.objects do
+			if self.Parser[option.type] then
+				task.spawn(function() self.Parser[option.type].Load(option.idx, option) end) -- task.spawn() so the config loading wont get stuck.
+			end
+		end
+
+		return true
+	end
+
 	function SaveManager:RefreshConfigList()
+        self:BuildFolderTree()
 		local list = listfiles(self.Folder .. '/settings')
 
 		local out = {}
@@ -211,6 +219,7 @@ local SaveManager = {} do
 	end
 
 	function SaveManager:LoadAutoloadConfig()
+        self:BuildFolderTree()
 		if isfile(self.Folder .. '/settings/autoload.txt') then
 			local name = readfile(self.Folder .. '/settings/autoload.txt')
 
@@ -222,7 +231,6 @@ local SaveManager = {} do
 			self.Library:Notify(string.format('Auto loaded config %q', name))
 		end
 	end
-
 
 	function SaveManager:BuildConfigSection(tab)
 		assert(self.Library, 'Must set SaveManager.Library')
