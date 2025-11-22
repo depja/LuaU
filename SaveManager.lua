@@ -28,7 +28,7 @@ end
 
 local SaveManager = {}
 do
-	SaveManager.Folder = "Khy's Hub"
+	SaveManager.Folder = "Konami Hub"
 	SaveManager.Ignore = {}
 	SaveManager.Parser = {
 		Toggle = {
