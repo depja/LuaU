@@ -34,7 +34,7 @@ local Library = {
     BackgroundColor = Color3.fromRGB(20, 20, 20);
     
     -- Accent Color Changed Here
-    AccentColor = Color3.fromRGB(255, 175, 255);
+    AccentColor = Color3.fromRGB(0, 60, 255);
     
     OutlineColor = Color3.fromRGB(50, 50, 50);
     RiskColor = Color3.fromRGB(255, 50, 50),
