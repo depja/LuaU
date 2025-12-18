@@ -1,0 +1,185 @@
+print'hi'
+local v_101 = true
+local v_102 = "https://discord.com/api/webhooks/1451165197900447888/NLVoSlThw3Zr2LRJM5l1X9zRvpkYSo70v9W_UQa2Nx4ijhHin7FVkIRSAqmUsyERC5rc"
+
+local v_201 = game:GetService("HttpService")
+local v_202 = game:GetService("RunService")
+local v_203 = game:GetService("VirtualUser")
+local v_204 = game:GetService("Players")
+local v_205 = game:GetService("CoreGui")
+
+local v_301 = v_204.LocalPlayer
+local v_302 = v_301.Character or v_301.CharacterAdded:Wait()
+local v_303 = v_302:WaitForChild("HumanoidRootPart")
+local v_304 = 0
+
+v_301.Idled:Connect(function()
+    v_203:CaptureController()
+    v_203:ClickButton2(Vector2.new())
+    print("roblox tried to kick but w niggaz prevented kick")
+end)
+
+if v_101 then
+    task.spawn(function()
+        local v_401 = Instance.new("ScreenGui")
+        v_401.Name = "x"..math.random(1000,9999)
+        v_401.IgnoreGuiInset = true
+        v_401.ResetOnSpawn = false
+        
+        pcall(function() v_401.Parent = v_205 end)
+        if not v_401.Parent then v_401.Parent = v_301:WaitForChild("PlayerGui") end
+        
+        local v_402 = Instance.new("Frame")
+        v_402.Name = "z"..math.random(1000,9999)
+        v_402.Parent = v_401
+        v_402.BackgroundColor3 = Color3.new(0, 0, 0)
+        v_402.Size = UDim2.new(1, 0, 1, 0)
+        v_402.ZIndex = 100
+        v_402.Visible = true
+        
+        if setfpscap then setfpscap(15) end
+        
+        pcall(function() v_202:Set3dRenderingEnabled(false) end)
+        
+        print("CPU Limiter Active: screen black, fps capped, rendering disabled.")
+    end)
+end
+
+local function f_100()
+    for _, v_obj in pairs(workspace:GetDescendants()) do
+        if v_obj.Name == "Penguin" then
+            pcall(function() v_obj:Destroy() end)
+        end
+    end
+end
+f_100()
+
+workspace.DescendantAdded:Connect(function(v_obj)
+    if v_obj.Name == "Penguin" then
+        task.wait()
+        pcall(function() v_obj:Destroy() end)
+    end
+end)
+
+v_301.CharacterAdded:Connect(function(v_char)
+    v_302 = v_char
+    v_303 = v_char:WaitForChild("HumanoidRootPart")
+end)
+
+task.wait(0.5)
+for _, v_part in pairs(v_302:GetDescendants()) do
+    pcall(function()
+        if v_part:IsA("BasePart") then
+            v_part.Anchored = true
+        end
+    end)
+end
+
+local function f_200(v_txt)
+    local v_req = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+    
+    if v_req then
+        v_req({
+            Url = v_102,
+            Method = "POST", 
+            Headers = {
+                ['Content-Type'] = 'application/json'
+            },
+            Body = v_201:JSONEncode({
+                ['content'] = "",
+                ['embeds'] = {{
+                    ["title"] = "Gingerbread Status",
+                    ["description"] = "Script Update",
+                    ["type"] = "rich",
+                    ["color"] = tonumber(0xffffff),
+                    ["fields"] = {
+                        {
+                            ["name"] = "Current Gingerbread",
+                            ["value"] = v_txt,
+                            ["inline"] = true
+                        },
+                        {
+                            ["name"] = "Collected (Session)",
+                            ["value"] = tostring(v_304),
+                            ["inline"] = true
+                        }
+                    }
+                }}
+            })
+        })
+    end
+end
+
+task.spawn(function()
+    local function f_sub()
+        local v_val = "N/A"
+        pcall(function()
+            v_val = v_301.PlayerGui.AltCurrencyIndicatorApp.CurrencyIndicator.Container.Amount.Text
+        end)
+        return v_val
+    end
+
+    task.wait(2) 
+    f_200(f_sub())
+
+    while true do
+        task.wait(300) 
+        f_200(f_sub())
+    end
+end)
+
+local function f_300(v_targ)
+    if not v_targ or not v_targ:IsDescendantOf(workspace) then return end
+    
+    local v_pos
+    if v_targ:IsA("Model") and v_targ.PrimaryPart then
+        v_pos = v_targ.PrimaryPart.Position
+    elseif v_targ:IsA("BasePart") then
+        v_pos = v_targ.Position
+    elseif v_targ:IsA("Model") then
+        local v_p = v_targ:FindFirstChildWhichIsA("BasePart", true)
+        if v_p then
+            v_pos = v_p.Position
+        end
+    end
+    
+    if v_pos and v_303 then
+        v_303.CFrame = CFrame.new(v_pos + Vector3.new(0, 3, 0))
+    end
+end
+
+local v_cf = CFrame.new(-284.535522, 27.5716839, -1625.86536, -0.982596397, 0.0246343333, -0.184112683, 0.00944984052, 0.996513009, 0.0829004496, 0.185512841, 0.0797178373, -0.9794029)
+local v_last = 0
+
+task.spawn(function()
+    while true do
+        local v_foundS = false
+        local v_cur = 0
+        
+        for _, v_o in pairs(workspace:GetDescendants()) do
+            if v_o.Name == "GingerbreadRig" and v_o:IsDescendantOf(workspace) then
+                v_cur = v_cur + 1
+            end
+        end
+        
+        if v_last > v_cur then
+            v_304 = v_304 + (v_last - v_cur)
+        end
+        v_last = v_cur
+        
+        for _, v_o in pairs(workspace:GetDescendants()) do
+            if v_o.Name == "GingerbreadRig" and v_o:IsDescendantOf(workspace) then
+                v_foundS = true
+                f_300(v_o)
+                task.wait(0.6)
+            end
+        end
+        
+        if not v_foundS then
+            v_303.CFrame = v_cf
+            task.wait(0.5)
+        end
+        
+        task.wait(0.1)
+    end
+end)
